@@ -138,9 +138,8 @@ void SwapDFS (uint64_t pageSwappedIn, uint64_t pageSwappedOut,
   {
     // we reached a frame that contains a page (and not a page table)
     uint64_t cyclicalDistance =
-        GetMinValue (
-            NUM_PAGES - GetAbsulutValue (pageSwappedIn - pageSwappedOut),
-            GetAbsulutValue (pageSwappedIn - pageSwappedOut));
+        GetMinValue (NUM_PAGES - GetAbsulutValue (pageSwappedIn - pageSwappedOut),
+                     GetAbsulutValue (pageSwappedIn - pageSwappedOut));
 
     if (cyclicalDistance > *max)
     {
@@ -154,17 +153,16 @@ void SwapDFS (uint64_t pageSwappedIn, uint64_t pageSwappedOut,
   }
 
   word_t tmpValue;
+  pageSwappedOut = (pageSwappedOut << PAGE_TABLE_WIDTH);
 
   for (uint64_t j = 0; j < PAGE_SIZE; j++)
   {
     parentFrame = frameNum;
     PMread (frameNum * PAGE_SIZE + j, &tmpValue);
 
-    pageSwappedOut = (pageSwappedOut << OFFSET_WIDTH) + j;
-
     if (tmpValue != 0)
     {
-      SwapDFS (pageSwappedIn, pageSwappedOut, frameSwappedOut, tmpValue, max,
+      SwapDFS (pageSwappedIn, pageSwappedOut + j, frameSwappedOut, tmpValue, max,
                iter + 1, parentFrame, parentFrameFinal, evictedPageIndex);
     }
   }
@@ -189,7 +187,15 @@ uint64_t getFreeFrame (uint64_t pageNum, uint64_t dontTake)
   uint64_t parentFrame = 0;
   uint64_t max = 0;
   uint64_t evictedPageIndex = 0;
-  SwapDFS (pageNum, 0, &frameNumber, 0, &max, 0, 0, &parentFrame, &evictedPageIndex);
+  SwapDFS (pageNum,
+           0,
+           &frameNumber,
+           0,
+           &max,
+           0,
+           0,
+           &parentFrame,
+           &evictedPageIndex);
   word_t tmp;
   for (int i = 0; i < PAGE_SIZE; i++)
   {
@@ -234,10 +240,11 @@ uint64_t GetTargetFrame (uint64_t pageNum)
   uint64_t frameNum = 0;
   word_t tmpValue;
   uint64_t prevFrameNum = -1;
+  uint64_t pageNumBitShift = pageNum;
 
   for (uint64_t i = 0; i < TABLES_DEPTH; i++)
   {
-    uint64_t lineIndex = CalculateLineIndex (pageNum);
+    uint64_t lineIndex = CalculateLineIndex (pageNumBitShift);
     uint64_t physicalAddress = CalcPhysicalAddress (frameNum, lineIndex);
     PMread (physicalAddress, &tmpValue);
     frameNum = tmpValue;
@@ -251,7 +258,7 @@ uint64_t GetTargetFrame (uint64_t pageNum)
 
     prevFrameNum = frameNum;
 
-    pageNum = UpdatePageNum (pageNum);
+      pageNumBitShift = UpdatePageNum (pageNumBitShift);
   }
 
   return frameNum;
