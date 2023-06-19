@@ -1,7 +1,6 @@
 #include "VirtualMemory.h"
 #include "PhysicalMemory.h"
 
-//TODO DO THEY HAVE TO BE THE SAME
 #define PAGE_TABLE_WIDTH OFFSET_WIDTH
 #define PAGE_TABLE_BITS (1 << PAGE_TABLE_WIDTH) - 1;
 
@@ -14,7 +13,6 @@ void InitializeFrame (uint64_t frameNum)
 {
   for (uint64_t i = 0; i < PAGE_SIZE; i++)
   {
-    //TODO Maybe don't initialize it to 0
     uint64_t physicalAddress = CalcPhysicalAddress (frameNum, i);
     PMwrite (physicalAddress, 0);
   }
@@ -28,7 +26,6 @@ void VMinitialize ()
   InitializeFrame (0);
 }
 
-//TODO CHECK BITSHIFT HELPER FUNCTIONS
 uint64_t CalculateLineIndex (uint64_t pageNum)
 {
   return (pageNum >> ((TABLES_DEPTH - 1) * PAGE_TABLE_WIDTH)) & ((1 << PAGE_TABLE_WIDTH) -
@@ -235,8 +232,6 @@ uint64_t GetTargetFrame (uint64_t pageNum)
    * 2. When done, return the last frame index that was calculated.
    */
 
-  // TODO: check validity of the virtual address somehow and return -1 if
-  //  invalid
   uint64_t frameNum = 0;
   word_t tmpValue;
   uint64_t prevFrameNum = -1;
@@ -278,6 +273,10 @@ uint64_t PrepareForReadWrite (uint64_t virtualAddress)
  * 5. create the target physical address of the word in the frame by
  *    adding the offset from (2) to the frame number from (3).
  */
+  if(virtualAddress < 0 || virtualAddress >= VIRTUAL_MEMORY_SIZE) {
+      return -1;
+  }
+
   uint64_t pageNumber = RemoveOffset (virtualAddress);
   uint64_t wordIndex = GetOffset (virtualAddress);
   uint64_t targetFrame = GetTargetFrame (pageNumber);
