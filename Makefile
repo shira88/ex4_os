@@ -2,19 +2,19 @@ CC=g++
 CXX=g++
 RANLIB=ranlib
 
-LIBSRC=PhysicalMemory.cpp
+LIBSRC=VirtualMemory.cpp
 LIBOBJ=$(LIBSRC:.cpp=.o)
 
 INCS=-I.
 CFLAGS = -Wall -std=c++11 -g $(INCS)
 CXXFLAGS = -Wall -std=c++11 -g $(INCS)
 
-VIRTUALMEMORYLIB = libVirtualMemory.a
-TARGETS = $(VIRTUALMEMORYLIB)
+VMLIB = libVirtualMemory.a
+TARGETS = $(VMLIB)
 
 TAR=tar
 TARFLAGS=-cvf
-TARNAME=ex4.tar
+TARNAME=ex1.tar
 TARSRCS=$(LIBSRC) Makefile README
 
 all: $(TARGETS)

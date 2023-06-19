@@ -98,7 +98,7 @@ indexInPrevFrame, int iter, uint64_t dontTake)
     }
   }
 
-  if (allZero && (prevFrame != -1) && (frameNum != dontTake))
+  if (allZero && (prevFrame != (uint64_t ) -1) && (frameNum != dontTake))
   {
     PMwrite (CalcPhysicalAddress (prevFrame, indexInPrevFrame), 0);
     return frameNum;
@@ -198,7 +198,7 @@ uint64_t getFreeFrame (uint64_t pageNum, uint64_t dontTake)
   {
     uint64_t physicalAddress = CalcPhysicalAddress (parentFrame, i);
     PMread (physicalAddress, &tmp);
-    if (tmp == frameNumber)
+    if ((uint64_t ) tmp == frameNumber)
     {
       PMwrite (physicalAddress, 0);
       break;
@@ -298,7 +298,7 @@ int VMread (uint64_t virtualAddress, word_t *value)
 {
   uint64_t targetPhysicalAddress = PrepareForReadWrite (virtualAddress);
 
-  if (targetPhysicalAddress == -1)
+  if (targetPhysicalAddress == (uint64_t ) -1)
   {
     return 0;
   }
@@ -318,7 +318,7 @@ int VMwrite (uint64_t virtualAddress, word_t value)
 {
   uint64_t targetPhysicalAddress = PrepareForReadWrite (virtualAddress);
 
-  if (targetPhysicalAddress == -1)
+  if (targetPhysicalAddress == (uint64_t ) -1)
   {
     return 0;
   }
