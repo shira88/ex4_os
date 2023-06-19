@@ -29,18 +29,28 @@ void VMinitialize ()
 }
 
 //TODO CHECK BITSHIFT HELPER FUNCTIONS
-uint64_t CalculateLineIndex (uint64_t virtualAddress)
+uint64_t CalculateLineIndex (uint64_t pageNum)
 {
-  return (virtualAddress >> (VIRTUAL_ADDRESS_WIDTH - PAGE_TABLE_WIDTH))
-         & ((1 << PAGE_TABLE_WIDTH) - 1);
+  return (pageNum >> ((TABLES_DEPTH - 1) * PAGE_TABLE_WIDTH)) & ((1 << PAGE_TABLE_WIDTH) -
+  1);
 }
 
-uint64_t UpdateVirtualAddress (uint64_t virtualAddress)
+uint64_t UpdatePageNum (uint64_t pageNum)
 {
-  return virtualAddress << PAGE_TABLE_WIDTH;
+  return pageNum << PAGE_TABLE_WIDTH;
 }
 
-void MaxBFS (uint64_t frameNum, uint64_t *max, int iter)
+uint64_t RemoveOffset (uint64_t pageNum)
+{
+  return pageNum >> OFFSET_WIDTH;
+}
+
+uint64_t GetOffset (uint64_t pageNum)
+{
+  return pageNum & ((1 << OFFSET_WIDTH) - 1);
+}
+
+void MaxDFS (uint64_t frameNum, uint64_t *max, int iter)
 {
   if (iter == TABLES_DEPTH)
   { return; }
@@ -49,7 +59,8 @@ void MaxBFS (uint64_t frameNum, uint64_t *max, int iter)
 
   for (uint64_t j = 0; j < PAGE_SIZE; j++)
   {
-    PMread (frameNum * PAGE_SIZE + j, &tmpValue);
+
+    PMread (CalcPhysicalAddress (frameNum, j), &tmpValue);
 
     if (tmpValue != 0)
     {
@@ -195,7 +206,7 @@ uint64_t getFreeFrame (uint64_t pageNum, uint64_t dontTake)
   return frameNumber;
 }
 
-uint64_t GetTargetPhysicalAddress (uint64_t virtualAddress)
+uint64_t GetTargetFrame (uint64_t pageNum)
 {
   /*
    * 1. for TABLE_DEPTH iterations:
@@ -224,16 +235,18 @@ uint64_t GetTargetPhysicalAddress (uint64_t virtualAddress)
   word_t tmpValue;
   uint64_t prevFrameNum = -1;
 
-  for (uint64_t i = 0; i <= TABLES_DEPTH; i++)
+  for (uint64_t i = 0; i < TABLES_DEPTH; i++)
   {
-    uint64_t lineIndex = CalculateLineIndex (virtualAddress);
-    uint64_t physicalAddress = frameAddress + lineIndex;
+    uint64_t lineIndex = CalculateLineIndex (pageNum);
+    uint64_t physicalAddress = CalcPhysicalAddress (frameNum, lineIndex);
     PMread (physicalAddress, &tmpValue);
     frameNum = tmpValue;
 
-    if ((i != TABLES_DEPTH) && (frameAddress == 0))
+    if (frameNum == 0)
     {
-      //TODO DEAL WITH CASE THAT FRAME ADDRESS IS 0
+      frameNum = getFreeFrame (pageNum, prevFrameNum);
+      InitializeFrame (frameNum);
+      PMwrite (physicalAddress, (word_t) frameNum);
     }
 
     prevFrameNum = frameNum;
